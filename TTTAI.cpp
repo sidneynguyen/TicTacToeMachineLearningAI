@@ -63,9 +63,14 @@ pair<int, int> TTTAI::move(int turn) {
     curr.read(fio, currentMove);
     cerr << "Read current move at: " << currentMove << endl;
     // Get a move
-    pair<int, int> coord = curr.findMove(pastMoves);
+    pair<int, int> coord = curr.findMove(fio, pastMoves);
     cerr << "Found move: (" << coord.first << ", " << coord.second << ")"
             << endl;
+    if (curr.moveExists(coord.first, coord.second)) {
+        currentMove = curr.getMove(coord.first, coord.second);
+        cerr << "Move already exists" << endl;
+        return coord;
+    }
     pastMoves[coord.first][coord.second] = 1;
     // Write new node to end of file
     TTTNode nextMove(rows, cols, turn);
@@ -111,14 +116,32 @@ void TTTAI::addMove(int row, int col, int trn) {
     pastMoves[row][col] = 1;
 }
 
+void TTTAI::win() {
+    TTTNode curr(rows, cols, 0);
+    curr.read(fio, currentMove);
+    curr.win();
+    curr.write(fio);
+}
+
+void TTTAI::lose() {
+    TTTNode curr(rows, cols, 0);
+    curr.read(fio, currentMove);
+    curr.lose();
+    curr.write(fio);
+}
+
+void TTTAI::tie() {
+    TTTNode curr(rows, cols, 0);
+    curr.read(fio, currentMove);
+    curr.tie();
+    curr.write(fio);
+}
+
 TTTNode::TTTNode(int rows, int cols, int trn) {
     position = 0;
-    p1.wins = 0;
-    p1.losses = 0;
-    p1.ties = 0;
-    p2.wins = 0;
-    p2.losses = 0;
-    p2.ties = 0;
+    stats.wins = 0;
+    stats.losses = 0;
+    stats.ties = 0;
     for (int i = 0; i < rows; i++) {
         vector<int> row;
         for (int j = 0; j < cols; j++) {
@@ -136,8 +159,7 @@ TTTNode::~TTTNode() {
 void TTTNode::read(fstream* fio, streampos pos) {
     fio->seekg(pos);
     fio->read((char*) &position, sizeof(streampos));
-    fio->read((char*) &p1, sizeof(TTTStat));
-    fio->read((char*) &p2, sizeof(TTTStat));
+    fio->read((char*) &stats, sizeof(TTTStat));
     fio->read((char*) &turn, sizeof(int));
     for (unsigned int i = 0; i < moves.size(); i++) {
         for (unsigned int j = 0; j < moves[j].size(); j++) {
@@ -149,8 +171,7 @@ void TTTNode::read(fstream* fio, streampos pos) {
 void TTTNode::write(fstream* fio) {
     fio->seekp(position);
     fio->write((char*) &position, sizeof(streampos));
-    fio->write((char*) &p1, sizeof(TTTStat));
-    fio->write((char*) &p2, sizeof(TTTStat));
+    fio->write((char*) &stats, sizeof(TTTStat));
     fio->write((char*) &turn, sizeof(int));
     for (unsigned int i = 0; i < moves.size(); i++) {
         for (unsigned int j = 0; j < moves[i].size(); j++) {
@@ -159,10 +180,43 @@ void TTTNode::write(fstream* fio) {
     }
 }
 
-pair<int, int> TTTNode::findMove(vector< vector<int> >& pMoves) {
+pair<int, int> TTTNode::findMove(fstream* fio, vector< vector<int> >& pMoves) {
+    vector<int> possibleMoves;
     for (unsigned int i = 0; i < moves.size(); i++) {
         for (unsigned int j = 0; j < moves[i].size(); j++) {
             if (!moves[i][j] && pMoves[i][j] == 0) {
+                return pair<int, int>(i, j);
+            }
+            if (pMoves[i][j] == 0) {
+                possibleMoves.push_back(moves[i][j]);
+            }
+        }
+    }
+
+    int best;
+    int bestLoc;
+    if (possibleMoves.size() > 0) {
+        TTTNode firstN(moves.size(), moves[0].size(), 0);
+        firstN.read(fio, possibleMoves[0]);
+        best = firstN.getScore();
+        bestLoc = firstN.position;
+    } else {
+        return pair<int, int>(0, 0);
+    }
+    if (possibleMoves.size() > 1) {
+        for (unsigned int i = 1; i < possibleMoves.size(); i++) {
+            TTTNode workN(moves.size(), moves[0].size(), 0);
+            workN.read(fio, possibleMoves[i]);
+            int score = workN.getScore();
+            if (score > best) {
+                best = score;
+                bestLoc = possibleMoves[i];
+            }
+        }
+    }
+    for (unsigned int i = 0; i < moves.size(); i++) {
+        for (unsigned int j = 0; j < moves[i].size(); j++) {
+            if (moves[i][j] == bestLoc) {
                 return pair<int, int>(i, j);
             }
         }
@@ -180,4 +234,20 @@ bool TTTNode::moveExists(int row, int col) {
 
 int TTTNode::getMove(int row, int col) {
     return moves[row][col];
+}
+
+int TTTNode::getScore() {
+    return stats.wins * 2 + stats.ties - stats.losses; 
+}
+
+void TTTNode::win() {
+    stats.wins++;
+}
+
+void TTTNode::lose() {
+    stats.losses++;
+}
+
+void TTTNode::tie() {
+    stats.ties++;
 }

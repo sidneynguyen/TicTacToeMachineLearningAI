@@ -67,6 +67,17 @@ int TTTBoard::check(int cond) {
             }
         }
     }
+    int count = 0;
+    for (unsigned int i = 0; i <= board.size(); i++) {
+        for (unsigned int j = 0; j <= board[i].size(); j++) {
+            if (board[i][j] != 0) {
+                count++;
+            }
+        }
+    }
+    if (count == board.size() * board[0].size()) {
+        return 3;
+    }
     return 0;
 }
 

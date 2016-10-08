@@ -19,6 +19,9 @@ public:
     pair<int, int> move(int turn);
 
     void addMove(int row, int col, int trn);
+    void win();
+    void lose();
+    void tie();
 
 private:
     fstream* fio;
@@ -51,15 +54,18 @@ public:
     void read(fstream* fio, streampos pos);
     void write(fstream* fio);
 
-    pair<int, int> findMove(vector< vector<int> >& pMoves);
+    pair<int, int> findMove(fstream* fio, vector< vector<int> >& pMoves);
     void setMovePos(int row, int col, streampos pos);
     bool moveExists(int row, int col);
     int getMove(int row, int col);
+    int getScore();
+    void win();
+    void lose();
+    void tie();
 
 private:
 
-    TTTStat p1;
-    TTTStat p2;
+    TTTStat stats;
     int turn;
     std::vector< std::vector<int> > moves;
 };
