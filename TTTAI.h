@@ -33,6 +33,7 @@ private:
     int rows;
     int cols;
     int cond;
+    vector<int> madeMoves;
 
 };
 

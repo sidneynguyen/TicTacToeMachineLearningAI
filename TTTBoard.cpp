@@ -1,5 +1,8 @@
 #include "TTTBoard.h"
 
+#include <iostream>
+using namespace std;
+
 TTTBoard::TTTBoard(int rows, int cols) {
     for (int i = 0; i < rows; i++) {
         std::vector<int> row;
@@ -67,9 +70,23 @@ int TTTBoard::check(int cond) {
             }
         }
     }
-    int count = 0;
-    for (unsigned int i = 0; i <= board.size(); i++) {
-        for (unsigned int j = 0; j <= board[i].size(); j++) {
+    for (unsigned int i = board.size() - 1; i >= (unsigned int) (cond - 1); i--) {
+        for (unsigned int j = 0; j <= board[i].size() - cond; j++) {
+            int player = board[i][j];
+            if (player != 0) {
+                for (int k = 1; k < cond; k++) {
+                    if (board[i - k][j + k] != player) {
+                        break;
+                    } else if (k == cond - 1) {
+                        return player;
+                    }
+                }
+            }
+        }
+    }
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < board.size(); i++) {
+        for (unsigned int j = 0; j < board[i].size(); j++) {
             if (board[i][j] != 0) {
                 count++;
             }

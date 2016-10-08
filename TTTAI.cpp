@@ -67,6 +67,7 @@ pair<int, int> TTTAI::move(int turn) {
     cerr << "Found move: (" << coord.first << ", " << coord.second << ")"
             << endl;
     if (curr.moveExists(coord.first, coord.second)) {
+        madeMoves.push_back(currentMove);
         currentMove = curr.getMove(coord.first, coord.second);
         cerr << "Move already exists" << endl;
         return coord;
@@ -82,6 +83,7 @@ pair<int, int> TTTAI::move(int turn) {
     curr.setMovePos(coord.first, coord.second, newPos);
     curr.write(fio);
     // Next move
+    madeMoves.push_back(currentMove);
     currentMove = newPos;
     cerr << "Set current move to: " << currentMove << endl;
     return coord;
@@ -117,24 +119,36 @@ void TTTAI::addMove(int row, int col, int trn) {
 }
 
 void TTTAI::win() {
-    TTTNode curr(rows, cols, 0);
-    curr.read(fio, currentMove);
-    curr.win();
-    curr.write(fio);
+    vector<int>::iterator it = madeMoves.begin();
+    while (it != madeMoves.end()) {
+        TTTNode curr(rows, cols, 0);
+        curr.read(fio, *it);
+        curr.win();
+        curr.write(fio);
+        ++it;
+    }
 }
 
 void TTTAI::lose() {
-    TTTNode curr(rows, cols, 0);
-    curr.read(fio, currentMove);
-    curr.lose();
-    curr.write(fio);
+    vector<int>::iterator it = madeMoves.begin();
+    while (it != madeMoves.end()) {
+        TTTNode curr(rows, cols, 0);
+        curr.read(fio, *it);
+        curr.lose();
+        curr.write(fio);
+        ++it;
+    }
 }
 
 void TTTAI::tie() {
-    TTTNode curr(rows, cols, 0);
-    curr.read(fio, currentMove);
-    curr.tie();
-    curr.write(fio);
+    vector<int>::iterator it = madeMoves.begin();
+    while (it != madeMoves.end()) {
+        TTTNode curr(rows, cols, 0);
+        curr.read(fio, *it);
+        curr.tie();
+        curr.write(fio);
+        ++it;
+    }
 }
 
 TTTNode::TTTNode(int rows, int cols, int trn) {
@@ -221,6 +235,7 @@ pair<int, int> TTTNode::findMove(fstream* fio, vector< vector<int> >& pMoves) {
             }
         }
     }
+    cerr << "Best: " << endl;
     return pair<int, int>(0, 0);
 }
 
@@ -237,7 +252,7 @@ int TTTNode::getMove(int row, int col) {
 }
 
 int TTTNode::getScore() {
-    return stats.wins * 2 + stats.ties - stats.losses; 
+    return stats.wins * 2 + stats.ties - stats.losses;
 }
 
 void TTTNode::win() {
